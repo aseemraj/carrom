@@ -10,6 +10,34 @@ def drawCorners():
     pygame.draw.circle(screen, BLACK, [wid-2*border/3, 2*border/3], pocketrad)
     pygame.draw.circle(screen, BLACK, [2*border/3, wid-2*border/3], pocketrad)
     pygame.draw.circle(screen, BLACK, [wid-2*border/3, wid-2*border/3], pocketrad)
+    # top
+    pygame.draw.rect(screen, BLACK, [strikerrad+pocketrad+border, pocketrad+border, wid-2*(strikerrad+pocketrad+border), gotirad], 1)
+    pygame.draw.line(screen, BLACK,(strikerrad+pocketrad+border, pocketrad+border+gotirad-2),(wid-(strikerrad+pocketrad+border),pocketrad+border+gotirad-2),2)
+    pygame.draw.circle(screen, RED, (strikerrad+pocketrad+border,pocketrad+border+gotirad/2),gotirad/2)
+    pygame.draw.circle(screen, BLACK, (strikerrad+pocketrad+border,pocketrad+border+gotirad/2),gotirad/2,2)
+    pygame.draw.circle(screen, RED, (wid-(strikerrad+pocketrad+border),pocketrad+border+gotirad/2),gotirad/2)
+    pygame.draw.circle(screen, BLACK, (wid-(strikerrad+pocketrad+border),pocketrad+border+gotirad/2),gotirad/2,2)
+    # right
+    pygame.draw.rect(screen, BLACK, [wid-pocketrad-border-gotirad,strikerrad+pocketrad+border, gotirad, wid-2*(strikerrad+pocketrad+border)], 1)
+    pygame.draw.line(screen, BLACK,(wid-pocketrad-border-gotirad,strikerrad+pocketrad+border),(wid-pocketrad-border-gotirad,wid-strikerrad-pocketrad-border),2)
+    pygame.draw.circle(screen, RED, (wid-pocketrad-border-gotirad/2,strikerrad+pocketrad+border),gotirad/2)
+    pygame.draw.circle(screen, BLACK, (wid-pocketrad-border-gotirad/2,strikerrad+pocketrad+border),gotirad/2,2)
+    pygame.draw.circle(screen, RED, (wid-pocketrad-border-gotirad/2,wid-strikerrad-pocketrad-border),gotirad/2)
+    pygame.draw.circle(screen, BLACK, (wid-pocketrad-border-gotirad/2,wid-strikerrad-pocketrad-border),gotirad/2,2)
+    # left
+    pygame.draw.rect(screen, BLACK, [pocketrad+border,strikerrad+pocketrad+border, gotirad, wid-2*(strikerrad+pocketrad+border)], 1)
+    pygame.draw.line(screen, BLACK,(pocketrad+border+gotirad-2,strikerrad+pocketrad+border),(pocketrad+border+gotirad-2,wid-strikerrad-pocketrad-border),2)
+    pygame.draw.circle(screen, RED, (pocketrad+border+gotirad/2,strikerrad+pocketrad+border),gotirad/2)
+    pygame.draw.circle(screen, BLACK, (pocketrad+border+gotirad/2,strikerrad+pocketrad+border),gotirad/2,2)
+    pygame.draw.circle(screen, RED, (pocketrad+border+gotirad/2,wid-strikerrad-pocketrad-border),gotirad/2)
+    pygame.draw.circle(screen, BLACK, (pocketrad+border+gotirad/2,wid-strikerrad-pocketrad-border),gotirad/2,2)
+    # bottom
+    pygame.draw.rect(screen, BLACK, [strikerrad+pocketrad+border, wid-pocketrad-border-gotirad, wid-2*(strikerrad+pocketrad+border), gotirad], 1)
+    pygame.draw.line(screen, BLACK,(strikerrad+pocketrad+border, wid-pocketrad-border-gotirad),(wid-(strikerrad+pocketrad+border),wid-pocketrad-border-gotirad),2)
+    pygame.draw.circle(screen, RED, (strikerrad+pocketrad+border,wid-pocketrad-border-gotirad/2),gotirad/2)
+    pygame.draw.circle(screen, BLACK, (strikerrad+pocketrad+border,wid-pocketrad-border-gotirad/2),gotirad/2,2)
+    pygame.draw.circle(screen, RED, (wid-(strikerrad+pocketrad+border),wid-pocketrad-border-gotirad/2),gotirad/2)
+    pygame.draw.circle(screen, BLACK, (wid-(strikerrad+pocketrad+border),wid-pocketrad-border-gotirad/2),gotirad/2,2)
     return
 
 def drawBorder():
@@ -18,11 +46,10 @@ def drawBorder():
             pygame.draw.rect(screen, LBROWN, [i, i, wid-2*i, wid-2*i], 3)
         else:
             pygame.draw.rect(screen, DBROWN, [i, i, wid-2*i, wid-2*i], 3)
-
     return
 
 pygame.init()
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode(scrsize)
 pygame.display.set_caption("Carrom")
 
 goti_list = pygame.sprite.Group()
@@ -31,14 +58,12 @@ bullet_list = pygame.sprite.Group()
 striker = Striker(BLUE)
 all_sprites_list.add(striker)
 
-for i in range(20):
+for i in range(10):
     # This represents a block
-    goti = Goti(RED)
- 
+    goti = Goti(DGRAY)
     # Set a random location for the block
     goti.rect.x = random.randrange(border, wid-border)
     goti.rect.y = random.randrange(border, wid-border)
- 
     # Add the goti to the list of objects
     goti_list.add(goti)
     all_sprites_list.add(goti)
@@ -95,31 +120,25 @@ while not done:
 
 
     for goti in goti_list:
-        t_list.empty()
-        for t in goti_list:
-            if t!=goti:
-                t_list.add(t)
+        hitObj = pygame.sprite.spritecollideany(goti, goti_list)
+        if hitObj is not None:
+            c1 = [hitObj.rect.x+gotirad/2, hitObj.rect.y+gotirad/2]
+            c2 = [goti.rect.x+gotirad/2, goti.rect.y+gotirad/2]
 
-        temp_hit_list = pygame.sprite.spritecollide(goti, t_list, False)
-        for hitGoti in temp_hit_list:
-            if not goti.collided and not hitGoti.collided:
-                hitGoti.velx, goti.velx = goti.velx, hitGoti.velx
-                hitGoti.vely, goti.vely = goti.vely, hitGoti.vely
-                goti.collided, hitGoti.collided = True, True
+            hitObj.velx, goti.velx = goti.velx, hitObj.velx
+            hitObj.vely, goti.vely = goti.vely, hitObj.vely
 
-    for t in goti_list:
-        t.collided = False
-
+    # striker hits a goti
     goti_hit_list = pygame.sprite.spritecollide(striker, goti_list, False)
-
     for goti in goti_hit_list:
         goti.velx = -1*goti.velx
         goti.vely = -1*goti.vely
-        
+
+    cstriker = [striker.rect.x+strikerrad/2, striker.rect.y+strikerrad/2]
     all_sprites_list.draw(screen)
 
     pygame.display.flip()
     # Limit to input frames per second
-    # clock.tick(fps)
+    clock.tick(fps)
 
 pygame.quit()
