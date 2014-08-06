@@ -4,7 +4,7 @@ from definitions import *
 from math import *
 # from numpy import *
 score = [0, 0, 0, 0]
-
+playing = 0     # The playing player
 def drawCorners():
     pygame.draw.circle(screen, BLACK, [2*border/3, 2*border/3], pocketrad)
     pygame.draw.circle(screen, BLACK, [wid-2*border/3, 2*border/3], pocketrad)
@@ -42,16 +42,16 @@ def drawCorners():
 
 def drawBorder():
     for i in range(0, border/2, 3):
-        if i%2==0:
-            pygame.draw.rect(screen, LBROWN, [i, i, wid-2*i, wid-2*i], 3)
-        else:
-            pygame.draw.rect(screen, DBROWN, [i, i, wid-2*i, wid-2*i], 3)
+        pygame.draw.rect(screen, (15+2*i, 15+i, 0), [i, i, wid-2*i, wid-2*i])
+
     return
 
 def inPocket(obj):
-    nearx = min(abs(obj.rect.x-2*border/3), abs(obj.rect.x-wid+2*border/3))
-    neary = min(abs(obj.rect.y-2*border/3), abs(obj.rect.y-wid+2*border/3))
-    if nearx<pocketrad/2 and neary<pocketrad/2:
+    nearness = min(mod([obj.rect.x-2*border/3, obj.rect.y-2*border/3]),
+                mod([obj.rect.x-2*border/3, obj.rect.y-wid+2*border/3]),
+                mod([obj.rect.x-wid+2*border/3, obj.rect.y-2*border/3]),
+                mod([obj.rect.x-wid+2*border/3, obj.rect.y-wid+2*border/3]))
+    if nearness<pocketrad:
         return True
     return False
 
@@ -106,7 +106,9 @@ all_sprites_list = pygame.sprite.Group()
 striker = Striker()
 all_sprites_list.add(striker)
 
-for i in range(10):
+
+
+for i in range(9):
     # This represents a block
     goti = Goti(BLACK)
     # Set a random location for the block
@@ -115,7 +117,7 @@ for i in range(10):
     # Add the goti to the list of objects
     goti_list.add(goti)
     all_sprites_list.add(goti)
-for i in range(10):
+for i in range(9):
     # This represents a block
     goti = Goti(WHITE)
     # Set a random location for the block
@@ -124,8 +126,14 @@ for i in range(10):
     # Add the goti to the list of objects
     goti_list.add(goti)
     all_sprites_list.add(goti)
+queen = Goti(PINK)
+queen.rect.x = wid/2
+queen.rect.y = wid/2
+goti_list.add(queen)
+all_sprites_list.add(queen)
 
 done = False    # loop till close button clicked
+foul = False    # Player pockets the striker
 clock = pygame.time.Clock()
 
 background = pygame.image.load('data/back.jpg').convert()
@@ -153,10 +161,11 @@ while not done:
             striker.state = 0
 
     # screen.blit(background, (0, 0))
-    screen.fill(WOOD)
 
     # pygame.draw.rect(screen, BROWN, [0, 0, wid, wid], border)
     drawBorder()
+    # screen.fill(WOOD)
+    pygame.draw.rect(screen, WOOD, [border/2, border/2, wid-border, wid-border])
     drawCorners()
 
     all_sprites_list.update()
@@ -172,53 +181,65 @@ while not done:
     # striker is in angle select mode
     if striker.state==1:
         pos = pygame.mouse.get_pos()
-        if pos[0]>border+strikerrad+gotirad and pos[0]<wid-(border+strikerrad+gotirad) and pos[1]>border+strikerrad+gotirad and pos[1]<wid-(border+strikerrad+gotirad):
+        if pos[0]>border+strikerrad+gotirad and \
+            pos[0]<wid-(border+strikerrad+gotirad) and \
+            pos[1]>border+strikerrad+gotirad and \
+            pos[1]<wid-(border+strikerrad+gotirad):
             pygame.draw.line(screen, RED,(cstriker[0],cstriker[1]),(pos[0],pos[1]),5)
         else:
             pygame.draw.line(screen, GREEN,(cstriker[0],cstriker[1]),(pos[0],pos[1]),5)
 
-    foul = False
+
     # striker hits a goti
     if striker.state==2:
         for goti in goti_list:
             if pygame.sprite.collide_circle(goti, striker):
                 resolveCollision(striker, goti)
             if inPocket(striker):
+                all_sprites_list.remove(striker)
                 foul = True
-                # goti.velx = -1*goti.velx
-                # goti.vely = -1*goti.vely
-    
-    chplayer = True
-    for disk in all_sprites_list:
-        if disk.velx!=0 or disk.vely!=0:
-            chplayer = False
-            break
-
-    chance = False
+                
+    # Goti is pocketed
     for goti in goti_list:
         goti.collided = False
         if inPocket(goti):
             if goti.isWhite:
                 score[striker.player] += 20
+            elif goti.isQueen:
+                score[striker.player] += 50
             else:
                 score[striker.player] += 10
-            chance = True
             goti_list.remove(goti)
             all_sprites_list.remove(goti)
 
-    if chplayer and striker.state==2:
+    # Have all the things been stabilized?
+    boardHalt = True
+    for disk in all_sprites_list:
+        if disk.velx!=0 or disk.vely!=0:
+            boardHalt = False
+            break
+
+
+    if boardHalt and striker.state==2:
         striker.state = 0
         if foul:
-            print "Foul by player ", striker.player
+            print "Foul by player ", striker.player + 1
             score[striker.player] -= 10
             fgoti = Goti(BLACK)
-            fgoti.rect.x = wid/2-gotirad/2
-            fgoti.rect.y = wid/2-gotirad/2
-        if not chance:
-            striker.player = (striker.player+1)%4
+            fgoti.rect.x, fgoti.rect.y = wid/2, wid/2
+            all_sprites_list.add(fgoti)
+            goti_list.add(fgoti)
+            playing = striker.player
         for e in range(4):
             print "Player ", e+1, ": ", score[e]
         print "\n"
+    
+    if boardHalt and foul:
+        foul = False
+        striker = Striker()
+        striker.state = 0
+        striker.player = (playing + 1)%4
+        all_sprites_list.add(striker)
 
     all_sprites_list.draw(screen)
 

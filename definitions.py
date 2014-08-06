@@ -11,18 +11,21 @@ WOOD     = ( 220, 200, 150)
 BLUE     = (   0,   0, 255)
 GREEN    = (   0, 255,   0)
 RED      = ( 255,   0,   0)
+PINK     = ( 255,   0, 255)
 PI = 3.141592653
 LEFT = 1
 RIGHT = 3
-border = 70
+border = 90
 
 strikerrad = 40
+strikerMass = 2
+gotiMass = 1
 pocketrad = 30
 gotirad = 26
 gotispeedx = 0
 gotispeedy = 0
-friction = 0.1
-fps = 70;
+friction = 0.2
+fps = 70
 
 # Set the width and height of the screen [width, height]
 scrsize = (720, 720)
@@ -48,14 +51,22 @@ class Goti(pygame.sprite.Sprite):
         self.image.set_colorkey(WOOD)
         if color==BLACK:
             self.isWhite = False
+            self.isQueen = False
             for i in range(gotirad/2):
                 pygame.draw.ellipse(self.image, (5*i, 5*i, 5*i), [i, i, gotirad-2*i, gotirad-2*i])
                 pygame.draw.ellipse(self.image, BLACK, [0, 0, gotirad, gotirad], 2)
         elif color==WHITE:
             self.isWhite = True
+            self.isQueen = False
             for i in range(gotirad/2):
                 pygame.draw.ellipse(self.image, (255-5*i, 255-5*i, 255-5*i), [i, i, gotirad-2*i, gotirad-2*i])
                 pygame.draw.ellipse(self.image, WHITE, [0, 0, gotirad, gotirad], 2)
+        elif color==PINK:
+            self.isWhite = False
+            self.isQueen = True
+            for i in range(gotirad/2):
+                pygame.draw.ellipse(self.image, (255-10*i, 0, 255-10*i), [i, i, gotirad-2*i, gotirad-2*i])
+                pygame.draw.ellipse(self.image, PINK, [0, 0, gotirad, gotirad], 2)
         # Fetch the rectangle object that has the dimensions of the image
         # image.
         # Update the position of this object by setting the values
@@ -96,13 +107,11 @@ class Goti(pygame.sprite.Sprite):
                 self.vely = 0
 
 class Striker(Goti):
-    """ The player class derives from Block, but overrides the 'update' 
-    functionality with new a movement function that will move the block 
+    """ The Striker class derives from Goti, but overrides some
+    functionality with new a movement function that will move the Striker
     with the mouse. """
     def __init__(self):
-        """ Constructor. Pass in the color of the block,
-        and its x and y position. """
- 
+        # Constructor function
         # Call the parent class (Sprite) constructor
         pygame.sprite.Sprite.__init__(self)
  
@@ -112,7 +121,7 @@ class Striker(Goti):
         self.image.fill(WOOD)
         self.image.set_colorkey(WOOD)
         for i in range(strikerrad/2):
-            pygame.draw.ellipse(self.image, (5*i, 5*i, 100+5*i), [i, i, strikerrad-2*i, strikerrad-2*i])
+            pygame.draw.ellipse(self.image, (10*i, 10*i, 100+5*i), [i, i, strikerrad-2*i, strikerrad-2*i])
         # pygame.draw.ellipse(self.image, color, [0, 0, strikerrad, strikerrad])
         pygame.draw.ellipse(self.image, BLACK, [0, 0, strikerrad, strikerrad], 2)
         # Fetch the rectangle object that has the dimensions of the image
@@ -126,6 +135,7 @@ class Striker(Goti):
         self.collided = False
         self.state = 0
         self.player = 0
+        self.transfer = 1
 
     def update(self):
         # User is still placing the striker
