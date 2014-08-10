@@ -1,3 +1,8 @@
+# This code is a property of ASEEM RAJ and SACHIN GROVER
+# Copyright (c) 2014
+
+
+# importing pygame and math libraries
 import pygame
 from math import *
 
@@ -12,6 +17,7 @@ BLUE     = (   0,   0, 255)
 GREEN    = (   0, 255,   0)
 RED      = ( 255,   0,   0)
 PINK     = ( 255,   0, 255)
+MAROON   = ( 150,   0,   0)
 PI = 3.141592653
 LEFT = 1
 RIGHT = 3
@@ -24,12 +30,14 @@ pocketrad = 30
 gotirad = 26
 gotispeedx = 0
 gotispeedy = 0
-friction = 0.2
+friction = 0.8
 fps = 70
 
 # Set the width and height of the screen [width, height]
 scrsize = (720, 720)
 wid = scrsize[0]
+
+# Norm of the coordinate
 mod = lambda v: sqrt(v[0] * v[0] + v[1] * v[1])
 
 class Goti(pygame.sprite.Sprite):
@@ -44,8 +52,6 @@ class Goti(pygame.sprite.Sprite):
         # Call the parent class (Sprite) constructor
         pygame.sprite.Sprite.__init__(self)
  
-        # Create an image of the block, and fill it with a color.
-        # This could also be an image loaded from the disk.
         self.image = pygame.Surface([gotirad, gotirad])
         self.image.fill(WOOD)
         self.image.set_colorkey(WOOD)
@@ -54,21 +60,20 @@ class Goti(pygame.sprite.Sprite):
             self.isQueen = False
             for i in range(gotirad/2):
                 pygame.draw.ellipse(self.image, (5*i, 5*i, 5*i), [i, i, gotirad-2*i, gotirad-2*i])
-                pygame.draw.ellipse(self.image, BLACK, [0, 0, gotirad, gotirad], 2)
+
         elif color==WHITE:
             self.isWhite = True
             self.isQueen = False
             for i in range(gotirad/2):
                 pygame.draw.ellipse(self.image, (255-5*i, 255-5*i, 255-5*i), [i, i, gotirad-2*i, gotirad-2*i])
-                pygame.draw.ellipse(self.image, WHITE, [0, 0, gotirad, gotirad], 2)
-        elif color==PINK:
+        elif color==MAROON:
             self.isWhite = False
             self.isQueen = True
             for i in range(gotirad/2):
-                pygame.draw.ellipse(self.image, (255-10*i, 0, 255-10*i), [i, i, gotirad-2*i, gotirad-2*i])
-                pygame.draw.ellipse(self.image, PINK, [0, 0, gotirad, gotirad], 2)
+                pygame.draw.ellipse(self.image, (150-i, 5*i, 5*i), [i, i, gotirad-2*i, gotirad-2*i])
+                pygame.draw.ellipse(self.image, MAROON, [0, 0, gotirad, gotirad], 2)        
+        
         # Fetch the rectangle object that has the dimensions of the image
-        # image.
         # Update the position of this object by setting the values
         # of rect.x and rect.y
         self.rect = self.image.get_rect()
@@ -79,10 +84,10 @@ class Goti(pygame.sprite.Sprite):
 
     def update(self):
         """ Called each frame. """
-        # Move block down one pixel
         self.rect.x += self.velx
         self.rect.y += self.vely
-        # If block is too far down, reset to top of screen.
+        
+        # If goti is too far down, reset to top of screen.
         if self.rect.y > wid-border/2-gotirad:
             self.rect.y = wid - border/2 - gotirad - 1
             self.vely = -1*abs(self.vely)
@@ -115,19 +120,15 @@ class Striker(Goti):
         # Call the parent class (Sprite) constructor
         pygame.sprite.Sprite.__init__(self)
  
-        # Create an image of the block, and fill it with a color.
-        # This could also be an image loaded from the disk.
+        # Create an image of the Striker, and fill it with a color.
         self.image = pygame.Surface([strikerrad, strikerrad])
         self.image.fill(WOOD)
         self.image.set_colorkey(WOOD)
         for i in range(strikerrad/2):
-            pygame.draw.ellipse(self.image, (10*i, 10*i, 100+5*i), [i, i, strikerrad-2*i, strikerrad-2*i])
-        # pygame.draw.ellipse(self.image, color, [0, 0, strikerrad, strikerrad])
+            pygame.draw.ellipse(self.image, (5*i, 5*i, 40+5*i), [i, i, strikerrad-2*i, strikerrad-2*i])
+
         pygame.draw.ellipse(self.image, BLACK, [0, 0, strikerrad, strikerrad], 2)
-        # Fetch the rectangle object that has the dimensions of the image
-        # image.
-        # Update the position of this object by setting the values
-        # of rect.x and rect.y
+        
         self.velx = 0
         self.vely = 0
         self.rect = self.image.get_rect()
@@ -188,3 +189,61 @@ class Striker(Goti):
                     self.velx = 0
                 if abs(self.vely)<friction:
                     self.vely = 0
+
+
+# When two entities collide, do what is to be done
+def resolveCollision(obj1, obj2):
+    c1 = [obj1.rect.x+obj1.rad, obj1.rect.y+obj1.rad]
+    c2 = [obj2.rect.x+obj2.rad, obj2.rect.y+obj2.rad]
+    distx = (c2[0]-c1[0])
+    disty = (c1[1]-c2[1])
+    dist = [(c2[0]-c1[0]), (c1[1]-c2[1])]
+    if dist[1]==0:
+        costheta = 1
+        sintheta = 0
+    elif dist[0]==0:
+        costheta = 0
+        sintheta = 1
+    if mod(dist)>0:
+        costheta = abs(distx)/mod(dist)
+        sintheta = abs(disty)/mod(dist)
+    if mod(dist)<obj1.rad + obj2.rad:
+        diff = obj1.rad + obj2.rad - mod(dist)
+        if obj2.rect.x>=obj1.rect.x:
+            obj2.rect.x += ceil(diff*costheta)
+        else:
+            obj1.rect.x += ceil(diff*costheta)
+        if obj2.rect.y>obj1.rect.y:
+            obj2.rect.y += ceil(diff*costheta)
+        else:
+            obj1.rect.y += ceil(diff*costheta)
+
+    v1x, v1y = obj1.velx, obj1.vely
+    v2x, v2y = obj2.velx, obj2.vely
+    obj1.velx = v1x*sintheta*sintheta + v2x*costheta*costheta + costheta*sintheta*(v2y-v1y)
+    obj2.velx = v1x*costheta*costheta + v2x*sintheta*sintheta + costheta*sintheta*(v1y-v2y)
+    obj1.vely = sintheta*costheta*(v1x-v2x) + v1y*costheta*costheta + v2y*sintheta*sintheta
+    obj2.vely = sintheta*costheta*(v2x-v1x) + v1y*sintheta*sintheta + v2y*costheta*costheta
+    for obj in [obj1, obj2]:
+        if mod([obj.velx, obj.vely])==0:
+            obj.velx = 0
+            obj.vely = 0
+        else:
+            obj.velx = obj.velx - friction * obj.velx / mod([obj.velx, obj.vely])  # friction acts in a direction
+            obj.vely = obj.vely - friction * obj.vely / mod([obj.velx, obj.vely])  # opposite to velocity
+            if abs(obj.velx)<friction:
+                obj.velx = 0
+            if abs(obj.vely)<friction:
+                obj.vely = 0
+
+
+# Check if a goti or the striker is pocketed by the current player or not
+def inPocket(obj):
+    nearness = min(mod([obj.rect.x-2*border/3, obj.rect.y-2*border/3]),
+                mod([obj.rect.x-2*border/3, obj.rect.y-wid+2*border/3]),
+                mod([obj.rect.x-wid+2*border/3, obj.rect.y-2*border/3]),
+                mod([obj.rect.x-wid+2*border/3, obj.rect.y-wid+2*border/3]))
+    if nearness<pocketrad:
+        return True
+    return False
+

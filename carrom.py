@@ -1,10 +1,20 @@
+# This code is a property of ASEEM RAJ and SACHIN GROVER
+# Copyright (c) 2014
+
+
+# importing modules and definitions
 import pygame, random
 from pygame.locals import *
 from definitions import *
 from math import *
-# from numpy import *
+
+# scores of all the 4 players
 score = [0, 0, 0, 0]
-playing = 0     # The playing player
+
+wht=[0,0,0,0]
+blk=[0,0,0,0]
+
+# function to draw pockets at corners and also the striker arenas
 def drawCorners():
     pygame.draw.circle(screen, BLACK, [2*border/3, 2*border/3], pocketrad)
     pygame.draw.circle(screen, BLACK, [wid-2*border/3, 2*border/3], pocketrad)
@@ -40,67 +50,144 @@ def drawCorners():
     pygame.draw.circle(screen, BLACK, (wid-(strikerrad+pocketrad+border),wid-pocketrad-border-gotirad/2),gotirad/2,2)
     return
 
+# initialize the game board
+def initialise():
+    #pygame.draw.circle(screen,BLACK, (wid/2,wid/2),border,2)
+    cx=wid/2
+    cy=wid/2
+    r3b2=(3**0.5)/2 
+    pygame.draw.line(screen,BLACK,(cx,cy+2.5*gotirad),(cx,cy-2.5*gotirad),3)
+    pygame.draw.line(screen,BLACK,(cx-r3b2*2.5*gotirad,cy-1.25*gotirad),(cx+r3b2*2.5*gotirad,cy+1.25*gotirad),3)
+    pygame.draw.line(screen,BLACK,(cx+r3b2*2.5*gotirad,cy-1.25*gotirad),(cx-r3b2*2.5*gotirad,cy+1.25*gotirad),3)
+    pygame.draw.circle(screen, BLACK, (wid-(strikerrad+pocketrad+border),wid-pocketrad-border-gotirad/2),gotirad/2,3)
+    pygame.draw.circle(screen,BLACK,(cx,cy),int(2.5*gotirad),3)
+    pygame.draw.circle(screen,BLACK,(cx,cy),gotirad/2,3)
+    pygame.draw.circle(screen,BLACK,(cx,cy),int(1.5*gotirad),3)
+    # Small Circles
+    pygame.draw.circle(screen,BLACK, (strikerrad+pocketrad+int(0.87*border),wid-pocketrad-int(1.17*border)-gotirad/2),int(0.35*gotirad),1)
+    pygame.draw.circle(screen,BLACK, (wid-(strikerrad+pocketrad+int(0.87*border)),pocketrad+int(1.17*border)+gotirad/2),int(0.35*gotirad),1)
+    pygame.draw.circle(screen,BLACK, (strikerrad+pocketrad+int(0.87*border),pocketrad+int(1.17*border)+gotirad/2),int(0.35*gotirad),1)
+    pygame.draw.circle(screen,BLACK, (wid-(strikerrad+pocketrad+int(0.87*border)),wid-pocketrad-int(1.17*border)-gotirad/2),int(0.35*gotirad),1)
+
+    # Foul lines
+    rad=pocketrad
+    pygame.draw.line(screen, BLACK,(3*rad/(2**0.5)+border/2,3*rad/(2**0.5)+border/2),(2.75*border,2.75*border),3)
+    pygame.draw.line(screen, BLACK,(wid-(3*rad/(2**0.5)+border/2),3*rad/(2**0.5)+border/2),(wid-2.75*border,2.75*border),3)
+    pygame.draw.line(screen, BLACK,(3*rad/(2**0.5)+border/2,wid-(3*rad/(2**0.5)+border/2)),(2.75*border,wid-2.75*border),3)
+    pygame.draw.line(screen, BLACK,(wid-(3*rad/(2**0.5)+border/2),wid-(3*rad/(2**0.5)+border/2)),(wid-2.75*border,wid-2.75*border),3)
+
+    pygame.draw.circle(screen, RED, (wid/2,wid/2),gotirad/2)
+
+    #Foul Arcs
+    rec=[]
+    pygame.draw.arc(screen, BLACK,[2*border,2*border, 80, 80], -5*pi/4+0.8, 3*pi/4-0.8, 2)
+    pygame.draw.arc(screen, BLACK,[wid-2.87*border,2*border, 80, 80], -7*pi/4+0.8, pi/4-0.8, 2)
+    pygame.draw.arc(screen, BLACK,[2*border,wid-2.87*border, 80, 80], -3*pi/4+0.8, 5*pi/4-0.8, 2)
+    pygame.draw.arc(screen, BLACK,[wid-2.87*border,wid-2.87*border, 80, 80], -1*pi/4+0.8, 7*pi/4-0.8, 2)
+    
+# model the arrangement in the beginning of a game
+def beg_arrangement():
+        cx=wid/2
+        cy=wid/2
+        r3=(3**0.5)
+        col=[BLACK,WHITE]
+        rad=gotirad/2
+        
+        g1 = Goti(MAROON)    
+        g1.rect.x =cx-rad
+        g1.rect.y =cy-rad
+        goti_list.add(g1)
+        all_sprites_list.add(g1)
+        
+        for i in range(2):
+            g1 = Goti(col[i%2])
+            g1.rect.x =cx-(((i+1)*(r3)*rad)+rad)
+            g1.rect.y =cy-(i+2)*rad
+            goti_list.add(g1)
+            all_sprites_list.add(g1)
+        for i in range(2):
+            g1 = Goti(col[1])
+            g1.rect.x =cx+(((i+1)*(r3)*rad)-rad) 
+            g1.rect.y =cy+i*rad
+            goti_list.add(g1)
+            all_sprites_list.add(g1)
+        for i in range(2):
+            g1 = Goti(col[i%2])
+            g1.rect.x =cx+(((i+1)*(r3)*rad)-rad) 
+            g1.rect.y =cy-(i+2)*rad
+            goti_list.add(g1)
+            all_sprites_list.add(g1)
+        for i in range(2):
+            g1 = Goti(col[1])
+            g1.rect.x =cx-(((i+1)*(r3)*rad)+rad) 
+            g1.rect.y =cy+i*rad
+            goti_list.add(g1)
+            all_sprites_list.add(g1)
+        for i in range(2):
+            g1 = Goti(col[1])
+            g1.rect.x =cx-rad
+            g1.rect.y =cy-(2*i+3)*rad
+            goti_list.add(g1)
+            all_sprites_list.add(g1)
+        for i in range(2):
+            g1 = Goti(col[i%2])
+            g1.rect.x =cx-rad
+            g1.rect.y =cy+(2*i+1)*rad
+            goti_list.add(g1)
+            all_sprites_list.add(g1)
+            
+        g1 = Goti(col[0])
+        g1.rect.x =cx-(4*rad*cos(3.14/6))-rad
+        g1.rect.y =cy-rad
+        goti_list.add(g1)
+        all_sprites_list.add(g1)
+
+        g1 = Goti(col[0])    
+        g1.rect.x =cx+(4*rad*cos(3.14/6))-rad 
+        g1.rect.y =cy-rad
+        goti_list.add(g1)
+        all_sprites_list.add(g1)
+
+        g1 = Goti(col[0])    
+        g1.rect.x =cx-(4*rad*cos(3.14/6)*sin(3.14/6))-rad
+        g1.rect.y =cy+(4*rad*cos(3.14/6)*cos(3.14/6))-rad
+        goti_list.add(g1)
+        all_sprites_list.add(g1)
+
+        g1 = Goti(col[0])    
+        g1.rect.x =cx+(4*rad*cos(3.14/6)*sin(3.14/6))-rad
+        g1.rect.y =cy+(4*rad*cos(3.14/6)*cos(3.14/6))-rad
+        goti_list.add(g1)
+        all_sprites_list.add(g1)
+
+        g1 = Goti(col[0])    
+        g1.rect.x =cx-(4*rad*cos(3.14/6)*sin(3.14/6))-rad
+        g1.rect.y =cy-(4*rad*cos(3.14/6)*cos(3.14/6))-rad
+        goti_list.add(g1)
+        all_sprites_list.add(g1)
+
+        g1 = Goti(col[0])    
+        g1.rect.x =cx+(4*rad*cos(3.14/6)*sin(3.14/6))-rad
+        g1.rect.y =cy-(4*rad*cos(3.14/6)*cos(3.14/6))-rad
+        goti_list.add(g1)
+        all_sprites_list.add(g1)
+
+# Draw the wooden border of the carrom board
 def drawBorder():
     for i in range(0, border/2, 3):
         pygame.draw.rect(screen, (15+2*i, 15+i, 0), [i, i, wid-2*i, wid-2*i])
 
     return
 
-def inPocket(obj):
-    nearness = min(mod([obj.rect.x-2*border/3, obj.rect.y-2*border/3]),
-                mod([obj.rect.x-2*border/3, obj.rect.y-wid+2*border/3]),
-                mod([obj.rect.x-wid+2*border/3, obj.rect.y-2*border/3]),
-                mod([obj.rect.x-wid+2*border/3, obj.rect.y-wid+2*border/3]))
-    if nearness<pocketrad:
-        return True
-    return False
-
-def resolveCollision(obj1, obj2):
-    c1 = [obj1.rect.x+obj1.rad, obj1.rect.y+obj1.rad]
-    c2 = [obj2.rect.x+obj2.rad, obj2.rect.y+obj2.rad]
-    distx = abs(c1[0]-c2[0])
-    disty = abs(c1[1]-c2[1])
-    dist = [abs(c1[0]-c2[0]), abs(c1[1]-c2[1])]
-    if mod(dist)==0:
-        costheta = 1
-        sintheta = 0
-    else:
-        costheta = abs(distx)/mod(dist)
-        sintheta = abs(disty)/mod(dist)
-    if mod(dist)<obj1.rad + obj2.rad:
-        diff = obj1.rad + obj2.rad - mod(dist)
-        if obj2.rect.x>=obj1.rect.x:
-            obj2.rect.x += ceil(diff*costheta)
-        else:
-            obj1.rect.x += ceil(diff*costheta)
-        if obj2.rect.y>obj1.rect.y:
-            obj2.rect.y += ceil(diff*costheta)
-        else:
-            obj1.rect.y += ceil(diff*costheta)
-
-    v1x, v1y = obj1.velx, obj1.vely
-    v2x, v2y = obj2.velx, obj2.vely
-    obj1.velx = v1x*sintheta*sintheta + v2x*costheta*costheta + costheta*sintheta*(v2y-v1y)
-    obj2.velx = v1x*costheta*costheta + v2x*sintheta*sintheta + costheta*sintheta*(v1y-v2y)
-    obj1.vely = sintheta*costheta*(v1x-v2x) + v1y*costheta*costheta + v2y*sintheta*sintheta
-    obj2.vely = sintheta*costheta*(v1x-v2x) + v1y*sintheta*sintheta + v2y*costheta*costheta
-    for obj in [obj1, obj2]:
-        if mod([obj.velx, obj.vely])==0:
-            obj.velx = 0
-            obj.vely = 0
-        else:
-            obj.velx = obj.velx - friction * obj.velx / mod([obj.velx, obj.vely])  # friction acts in a direction
-            obj.vely = obj.vely - friction * obj.vely / mod([obj.velx, obj.vely])  # opposite to velocity
-            if abs(obj.velx)<friction:
-                obj.velx = 0
-            if abs(obj.vely)<friction:
-                obj.vely = 0
-
-
+# Initialize GUI
 pygame.init()
+
+# Set screensize
 screen = pygame.display.set_mode(scrsize)
+
 pygame.display.set_caption("Carrom")
 
+# Initialize a list of tangible objects
 goti_list = pygame.sprite.Group()
 all_sprites_list = pygame.sprite.Group()
 striker = Striker()
@@ -108,41 +195,23 @@ all_sprites_list.add(striker)
 
 
 
-for i in range(9):
-    # This represents a block
-    goti = Goti(BLACK)
-    # Set a random location for the block
-    goti.rect.x = random.randrange(border, wid-border)
-    goti.rect.y = random.randrange(border, wid-border)
-    # Add the goti to the list of objects
-    goti_list.add(goti)
-    all_sprites_list.add(goti)
-for i in range(9):
-    # This represents a block
-    goti = Goti(WHITE)
-    # Set a random location for the block
-    goti.rect.x = random.randrange(border, wid-border)
-    goti.rect.y = random.randrange(border, wid-border)
-    # Add the goti to the list of objects
-    goti_list.add(goti)
-    all_sprites_list.add(goti)
-queen = Goti(PINK)
-queen.rect.x = wid/2
-queen.rect.y = wid/2
-goti_list.add(queen)
-all_sprites_list.add(queen)
-
-done = False    # loop till close button clicked
-foul = False    # Player pockets the striker
+done = False        # loop till close button clicked
+foul = False        # Player pockets the striker
+strikerfoul=False   # To check Striker fouls
+queen_taken=True    # Check if queen needs a cover
 clock = pygame.time.Clock()
 
-background = pygame.image.load('data/back.jpg').convert()
+# background = pygame.image.load('data/back.jpg').convert()
 
 # main screen creation
-screen.blit(background, (0, 0))
+# screen.blit(background, (0, 0))
 pygame.display.update()
 
+curr_player=1       # Current Player (Changing Player)
+initial_flag=True
+queen_flag=False    # Check if queen is pocketed
 
+# The main event loop
 while not done:
     for event in pygame.event.get(): # User did something
         if event.type == pygame.QUIT: # If user clicked close
@@ -150,6 +219,11 @@ while not done:
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == LEFT:
             if striker.state==0:
                 striker.state = 1
+                for goti in goti_list:
+                    if pygame.sprite.collide_circle(goti, striker):
+                        striker.state = 0
+                        pygame.draw.circle(screen, RED, (striker.rect.centerx, striker.rect.centery), strikerrad+2, 2)
+                        break
             elif striker.state==1:
                 striker.state = 2
                 cstriker = [striker.rect.x+strikerrad/2, striker.rect.y+strikerrad/2]
@@ -160,13 +234,13 @@ while not done:
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == RIGHT:
             striker.state = 0
 
-    # screen.blit(background, (0, 0))
-
-    # pygame.draw.rect(screen, BROWN, [0, 0, wid, wid], border)
     drawBorder()
-    # screen.fill(WOOD)
     pygame.draw.rect(screen, WOOD, [border/2, border/2, wid-border, wid-border])
+    if initial_flag:
+        beg_arrangement()
+        initial_flag=False
     drawCorners()
+    initialise()
 
     all_sprites_list.update()
 
@@ -191,27 +265,58 @@ while not done:
 
 
     # striker hits a goti
+    playing=striker.player
     if striker.state==2:
         for goti in goti_list:
             if pygame.sprite.collide_circle(goti, striker):
                 resolveCollision(striker, goti)
             if inPocket(striker):
+                playing=striker.player
                 all_sprites_list.remove(striker)
-                foul = True
+                strikerfoul = True
                 
     # Goti is pocketed
     for goti in goti_list:
         goti.collided = False
-        if inPocket(goti):
+        if queen_flag and inPocket(goti):
             if goti.isWhite:
                 score[striker.player] += 20
-            elif goti.isQueen:
-                score[striker.player] += 50
-            else:
+                wht[striker.player]+=1
+                queen_flag=False
+            elif not goti.isQueen:
                 score[striker.player] += 10
+                blk[striker.player]+=1
+                queen_flag=False
             goti_list.remove(goti)
             all_sprites_list.remove(goti)
-
+            curr_player=0
+        elif queen_flag and not inPocket(goti):
+            queen_taken=False
+            queen_flag=False
+            
+        elif not queen_flag and inPocket(goti):
+            if goti.isWhite:
+                score[striker.player] += 20
+                wht[striker.player]+=1
+            elif goti.isQueen:
+                queen_flag=True
+                score[striker.player] +=50
+            else:
+                score[striker.player] += 10
+                blk[striker.player]+=1
+            goti_list.remove(goti)
+            all_sprites_list.remove(goti)
+            curr_player=0
+            
+    # BUGGY CODE HERE, DO SOMETHING
+    # if not queen_taken:
+    #     g1 = Goti(MAROON)    
+    #     g1.rect.x =wid/2-gotirad/2
+    #     g1.rect.y =wid/2-gotirad/2
+    #     goti_list.add(g1)
+    #     all_sprites_list.add(g1)
+    #     queen_taken=True
+        
     # Have all the things been stabilized?
     boardHalt = True
     for disk in all_sprites_list:
@@ -222,29 +327,47 @@ while not done:
 
     if boardHalt and striker.state==2:
         striker.state = 0
-        if foul:
-            print "Foul by player ", striker.player + 1
-            score[striker.player] -= 10
-            fgoti = Goti(BLACK)
-            fgoti.rect.x, fgoti.rect.y = wid/2, wid/2
-            all_sprites_list.add(fgoti)
-            goti_list.add(fgoti)
-            playing = striker.player
+
+        # Print scores of all players
         for e in range(4):
             print "Player ", e+1, ": ", score[e]
         print "\n"
-    
-    if boardHalt and foul:
-        foul = False
+        
+        striker.player = (striker.player + curr_player)%4
+        curr_player=1
+        
+    # Everything ceases to move
+    if boardHalt and strikerfoul:
+        strikerfoul = False
         striker = Striker()
         striker.state = 0
-        striker.player = (playing + 1)%4
         all_sprites_list.add(striker)
+        if score[playing]>0:
+            if blk[playing]>0:
+                score[playing] -= 10
+                blk[playing]-=1
+                fgoti = Goti(BLACK)
+                fgoti.rect.x, fgoti.rect.y = wid/2-gotirad/2, wid/2-gotirad/2
+                all_sprites_list.add(fgoti)
+                goti_list.add(fgoti)
+            elif wht[playing]>0:
+                score[playing] -= 20
+                wht[playing]-=1
+                fgoti = Goti(WHITE)
+                fgoti.rect.x, fgoti.rect.y = wid/2-gotirad/2, wid/2-gotirad/2
+                all_sprites_list.add(fgoti)
+                goti_list.add(fgoti)
+                
+        curr_player=1
+        striker.player = (playing + curr_player)%4
+    
 
+    # Draw everything again (a kind of update)
     all_sprites_list.draw(screen)
 
 
     pygame.display.flip()
+
     # Limit to input frames per second
     clock.tick(fps)
 
