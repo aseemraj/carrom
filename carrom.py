@@ -1,4 +1,4 @@
-# This code is a property of ASEEM RAJ and SACHIN GROVER
+# This code is a property of ASEEM RAJ BARANWAL and SACHIN GROVER
 # Copyright (c) 2014
 
 
@@ -7,12 +7,19 @@ import pygame, random
 from pygame.locals import *
 from definitions import *
 from math import *
-
+from button import *
 # scores of all the 4 players
 score = [0, 0, 0, 0]
 
 wht=[0,0,0,0]
 blk=[0,0,0,0]
+
+# Initialize GUI
+pygame.init()
+
+# the most awesome font in the world
+font = pygame.font.Font(None, 34)
+text = ''
 
 # function to draw pockets at corners and also the striker arenas
 def drawCorners():
@@ -179,9 +186,6 @@ def drawBorder():
 
     return
 
-# Initialize GUI
-pygame.init()
-
 # Set screensize
 screen = pygame.display.set_mode(scrsize)
 
@@ -198,7 +202,7 @@ all_sprites_list.add(striker)
 done = False        # loop till close button clicked
 foul = False        # Player pockets the striker
 strikerfoul=False   # To check Striker fouls
-queen_taken=True    # Check if queen needs a cover
+queen_taken=False    # Check if queen needs a cover
 clock = pygame.time.Clock()
 
 # background = pygame.image.load('data/back.jpg').convert()
@@ -228,8 +232,8 @@ while not done:
                 striker.state = 2
                 cstriker = [striker.rect.x+strikerrad/2, striker.rect.y+strikerrad/2]
                 pos = pygame.mouse.get_pos()
-                striker.velx = (cstriker[0] - pos[0])/4
-                striker.vely = (cstriker[1] - pos[1])/4
+                striker.velx = (cstriker[0] - pos[0])/2
+                striker.vely = (cstriker[1] - pos[1])/2
 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == RIGHT:
             striker.state = 0
@@ -259,9 +263,9 @@ while not done:
             pos[0]<wid-(border+strikerrad+gotirad) and \
             pos[1]>border+strikerrad+gotirad and \
             pos[1]<wid-(border+strikerrad+gotirad):
-            pygame.draw.line(screen, RED,(cstriker[0],cstriker[1]),(pos[0],pos[1]),5)
+            pygame.draw.line(screen, RED,(cstriker[0],cstriker[1]),(pos[0],pos[1]),2)
         else:
-            pygame.draw.line(screen, GREEN,(cstriker[0],cstriker[1]),(pos[0],pos[1]),5)
+            pygame.draw.line(screen, GREEN,(cstriker[0],cstriker[1]),(pos[0],pos[1]),2)
 
 
     # striker hits a goti
@@ -279,44 +283,36 @@ while not done:
     for goti in goti_list:
         goti.collided = False
         if queen_flag and inPocket(goti):
+            score[striker.player] +=50
+            queen_taken = True
             if goti.isWhite:
                 score[striker.player] += 20
                 wht[striker.player]+=1
-                queen_flag=False
             elif not goti.isQueen:
                 score[striker.player] += 10
                 blk[striker.player]+=1
-                queen_flag=False
             goti_list.remove(goti)
             all_sprites_list.remove(goti)
             curr_player=0
-        elif queen_flag and not inPocket(goti):
-            queen_taken=False
-            queen_flag=False
-            
+
         elif not queen_flag and inPocket(goti):
             if goti.isWhite:
                 score[striker.player] += 20
                 wht[striker.player]+=1
             elif goti.isQueen:
                 queen_flag=True
-                score[striker.player] +=50
             else:
                 score[striker.player] += 10
                 blk[striker.player]+=1
             goti_list.remove(goti)
             all_sprites_list.remove(goti)
             curr_player=0
+
+    if len(goti_list)==1:
+        for q in goti_list:
+            if q.isQueen:
+                strikerfoul = True
             
-    # BUGGY CODE HERE, DO SOMETHING
-    # if not queen_taken:
-    #     g1 = Goti(MAROON)    
-    #     g1.rect.x =wid/2-gotirad/2
-    #     g1.rect.y =wid/2-gotirad/2
-    #     goti_list.add(g1)
-    #     all_sprites_list.add(g1)
-    #     queen_taken=True
-        
     # Have all the things been stabilized?
     boardHalt = True
     for disk in all_sprites_list:
@@ -327,12 +323,17 @@ while not done:
 
     if boardHalt and striker.state==2:
         striker.state = 0
+        if not queen_taken and queen_flag and curr_player!=0:
+            queen_flag = False
+            g1=Goti(MAROON)
+            g1.rect.x = wid/2 - gotirad/2
+            g1.rect.y = wid/2 - gotirad/2
+            goti_list.add(g1)
+            all_sprites_list.add(g1)
 
-        # Print scores of all players
-        for e in range(4):
-            print "Player ", e+1, ": ", score[e]
-        print "\n"
-        
+        elif queen_taken and queen_flag:
+            queen_flag = False
+
         striker.player = (striker.player + curr_player)%4
         curr_player=1
         
@@ -365,6 +366,67 @@ while not done:
     # Draw everything again (a kind of update)
     all_sprites_list.draw(screen)
 
+    pygame.draw.rect(screen, (0, 0, 0), [wid, 0, wid, wid])
+    font = pygame.font.Font(None, 34)
+    header = font.render("Score:", 5, (255, 255, 255))
+    headerpos = header.get_rect()
+    headerpos.centerx = 950
+    headerpos.centery = 50
+    screen.blit(header, headerpos)
+    font = pygame.font.Font(None, 30)
+    if playing==0:
+        text = font.render("Player 1: " + str(score[0]), 80, (120, 120, 200))
+    else:
+        text = font.render("Player 1: " + str(score[0]), 80, (200, 200, 200))
+    textpos = text.get_rect()
+    textpos.centerx = 950
+    textpos.centery = 100
+    screen.blit(text, textpos)
+    if playing==1:
+        text = font.render("Player 2: " + str(score[1]), 80, (120, 120, 200))
+    else:
+        text = font.render("Player 2: " + str(score[1]), 80, (200, 200, 200))
+    textpos = text.get_rect()
+    textpos.centerx = 950
+    textpos.centery = 150
+    screen.blit(text, textpos)
+    if playing==2:
+        text = font.render("Player 3: " + str(score[2]), 80, (120, 120, 200))
+    else:
+        text = font.render("Player 3: " + str(score[2]), 80, (200, 200, 200))
+    textpos = text.get_rect()
+    textpos.centerx = 950
+    textpos.centery = 200
+    screen.blit(text, textpos)
+    if playing==3:
+        text = font.render("Player 4: " + str(score[3]), 80, (120, 120, 200))
+    else:
+        text = font.render("Player 4: " + str(score[3]), 80, (200, 200, 200))
+    textpos = text.get_rect()
+    textpos.centerx = 950
+    textpos.centery = 250
+    screen.blit(text, textpos)
+
+    text = font.render("Striker Velocity: " + str(ceil(mod([striker.velx, striker.vely]) * 100)/100.0), 80, (120, 200, 120))
+    textpos = text.get_rect()
+    textpos.centerx = 950
+    textpos.centery = 300
+    screen.blit(text, textpos)
+    
+    if strikerfoul:
+        text = font.render("Striker in Pocket. Foul", 80, (200, 120, 120))
+        textpos = text.get_rect()
+        textpos.centerx = 950
+        textpos.centery = 400
+        screen.blit(text, textpos)
+
+
+    font = pygame.font.Font(None, 24)
+    text = font.render("(c) 2014 Aseem Raj and Sachin Grover", 85, (150, 150, 150))
+    textpos = text.get_rect()
+    textpos.centerx = 950
+    textpos.centery = 650
+    screen.blit(text, textpos)
 
     pygame.display.flip()
 

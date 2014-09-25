@@ -1,4 +1,4 @@
-# This code is a property of ASEEM RAJ and SACHIN GROVER
+# This code is a property of ASEEM RAJ BARANWAL and SACHIN GROVER
 # Copyright (c) 2014
 
 
@@ -30,15 +30,19 @@ pocketrad = 30
 gotirad = 26
 gotispeedx = 0
 gotispeedy = 0
-friction = 0.8
+friction = 0.2
 fps = 70
 
 # Set the width and height of the screen [width, height]
-scrsize = (720, 720)
-wid = scrsize[0]
+scrsize = (1200, 720)
+wid = scrsize[1]
 
 # Norm of the coordinate
 mod = lambda v: sqrt(v[0] * v[0] + v[1] * v[1])
+
+pygame.mixer.init()
+collideSound = pygame.mixer.Sound("data/collide.ogg")
+inPocketSound = pygame.mixer.Sound("data/gotoholes.ogg")
 
 class Goti(pygame.sprite.Sprite):
     """
@@ -81,6 +85,7 @@ class Goti(pygame.sprite.Sprite):
         self.velx = gotispeedx
         self.vely = gotispeedy
         self.collided = False
+        self.mass = gotiMass
 
     def update(self):
         """ Called each frame. """
@@ -137,6 +142,7 @@ class Striker(Goti):
         self.state = 0
         self.player = 0
         self.transfer = 1
+        self.mass = strikerMass
 
     def update(self):
         # User is still placing the striker
@@ -218,10 +224,12 @@ def resolveCollision(obj1, obj2):
         else:
             obj1.rect.y += ceil(diff*costheta)
 
+    rat1 = obj1.mass/(obj1.mass+obj2.mass)
+    rat2 = obj2.mass/(obj1.mass+obj2.mass)
     v1x, v1y = obj1.velx, obj1.vely
     v2x, v2y = obj2.velx, obj2.vely
-    obj1.velx = v1x*sintheta*sintheta + v2x*costheta*costheta + costheta*sintheta*(v2y-v1y)
-    obj2.velx = v1x*costheta*costheta + v2x*sintheta*sintheta + costheta*sintheta*(v1y-v2y)
+    obj1.velx = v1x*sintheta*sintheta + v2x*costheta*costheta + costheta*sintheta*(v2y-v1y)*rat2
+    obj2.velx = v1x*costheta*costheta + v2x*sintheta*sintheta + costheta*sintheta*(v1y-v2y)*rat1
     obj1.vely = sintheta*costheta*(v1x-v2x) + v1y*costheta*costheta + v2y*sintheta*sintheta
     obj2.vely = sintheta*costheta*(v2x-v1x) + v1y*sintheta*sintheta + v2y*costheta*costheta
     for obj in [obj1, obj2]:
@@ -235,6 +243,9 @@ def resolveCollision(obj1, obj2):
                 obj.velx = 0
             if abs(obj.vely)<friction:
                 obj.vely = 0
+    
+    # collision sound
+    collideSound.play()
 
 
 # Check if a goti or the striker is pocketed by the current player or not
@@ -244,6 +255,10 @@ def inPocket(obj):
                 mod([obj.rect.x-wid+2*border/3, obj.rect.y-2*border/3]),
                 mod([obj.rect.x-wid+2*border/3, obj.rect.y-wid+2*border/3]))
     if nearness<pocketrad:
+        if not hasattr(obj, 'transfer'):
+            inPocketSound.play()
+        obj.velx = 0
+        obj.vely = 0
         return True
     return False
 
